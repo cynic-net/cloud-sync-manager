@@ -1,2 +1,11 @@
-def test_nothing():
-    assert 1
+from    csm.csm  import backup_ts
+from    datetime  import datetime, timezone
+
+def test_backup_dir():
+    assert '20251228-135547.123' \
+        == backup_ts(datetime(2025, 12, 28, 13, 55, 47, 123456, tzinfo=timezone.utc))
+    #   Edge case: microseconds round down
+    assert '20250101-000000.000' \
+        == backup_ts(datetime(2025, 1, 1, 0, 0, 0, 999, tzinfo=timezone.utc))
+    #   Default args.
+    assert len('20251228-135547.123') == len(backup_ts())

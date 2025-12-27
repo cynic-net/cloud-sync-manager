@@ -1,0 +1,91 @@
+from    csm.config  import *
+from    pytest  import mark, raises
+
+####################################################################
+#   SyncPath
+
+@mark.parametrize('pathstr', [
+    '/this/path/does/not/exist/i/hope',
+    'foo/bar',
+    '~/stuff',
+])
+def test_SyncPath(pathstr):
+    sp = SyncPath(pathstr, { 'foo': 'bar'})
+    assert sp.path.is_absolute()
+    assert str(sp.path).endswith(pathstr.removeprefix('~'))
+    assert sp['foo'] == 'bar'
+
+####################################################################
+#   Config
+
+config_toml = '''
+    ['~/cloud/foo']
+    descripton = 'The foo files.'
+    remote = 'my-foo:'              # rclone remote `my-foo:`
+    action = 'bisync'               # see actions below
+    period = '5m'                   # optional; see "Periodic Actions" below
+
+    [a]
+
+    [b]
+'''
+
+def test_readconfig():
+    c = Config()
+    assert 0 == len(c)
+
+    c.parse_toml(config_toml)
+    assert 3 == len(c)
+
+    assert c[Path('~/cloud/foo').expanduser().resolve()]
+    assert c[Path('~/cloud/foo')]
+    assert c['~/cloud/foo']
+    assert c.get('~/cloud/foo')
+
+    add_toml = '''
+        [z]
+        description = 'Additional TOML.'
+    '''
+    c.parse_toml(add_toml)
+    assert 4 == len(c)
+    assert c['z']['description'] == 'Additional TOML.'
+
+groups_toml = '''
+    ['/p1']
+    ['/p2']
+    groups = ['g2+']
+    ['/p3']
+    groups = ['g2+', 'g3+']
+    ['/p4']
+    groups = ['g2+', 'g3+', 'g4+']
+'''
+
+def test_groups_toml_groups():
+    c = Config(groups_toml)
+    def grouplist(name):
+        return [ sp.prettypath for sp in c.group(name) ]
+    assert                    [] == grouplist('nonexistent')
+    assert               ['/p4'] == grouplist('g4+')
+    assert        ['/p3', '/p4'] == grouplist('g3+')
+    assert ['/p2', '/p3', '/p4'] == grouplist('g2+')
+
+@mark.parametrize('path_groups, paths', [
+    (('/p1',                ),  ('/p1',                             )),
+    (('/p4', '/p2',         ),  ('/p4', '/p2',                      )),
+    (('/p3', 'g4+', '/p1'   ),  ('/p3', '/p4', '/p1',               )),
+    (('g2+',                ),  ('/p2', '/p3', '/p4',               )),
+    #   Dups removed; order maintained.
+    #   XXX do we really want to bother?
+   #(('/p4', 'g3+',         ),  ('/p4', '/p3',                      )),
+])
+def test_expand_groups_ok(path_groups, paths):
+    c = Config(groups_toml)
+    sps = c.expand_groups(path_groups)
+    assert list(paths) == [ sp.prettypath for sp in sps ]
+
+def test_expand_groups_errs():
+    c = Config(groups_toml)
+    with raises(KeyError) as ex:
+        c.expand_groups(['/not/here', 'notagroup', '/not/there'])
+    assert ex.match('Cannot match groups/paths:' \
+        r" \['/not/here', 'notagroup', '/not/there'\]")

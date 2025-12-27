@@ -13,11 +13,23 @@ elapsed() { echo $(( $(date +%s) - $elapsed_start )); }
 
 PROJDIR=$(cd $(dirname "$0") && pwd -P)
 
+skip_typecheck=false
 while [[ $# -gt 0 ]]; do case "$1" in
     -C)     shift; rm -rf "$PROJDIR/.build/";;
-    -c)     shift; rm -rf "$PROJDIR/.build/virtualenv";;
+    -c)     shift; rm -rf "$PROJDIR/.build/"{cache,virtualenv};;
+    -T)     shift; skip_typecheck=true;;
     *)      break;;
 esac; done
 
 . $PROJDIR/pactivate -q
+
+####################################################################
+
+if $skip_typecheck; then
+    echo 'WARNING: Skipping typecheck.'
+else
+    echo -n 'mypy: '
+    PYTHONPATH=src/ mypy        # Config in pyproject.toml.
+fi
+
 pytest "$@" || fail

@@ -10,15 +10,31 @@ urls.homepage = 'https://github.com/cynic-net/cloud-sync-manager'
 urls.source = 'https://github.com/cynic-net/cloud-sync-manager'
 urls.tracker = 'https://github.com/cynic-net/cloud-sync-manager/issues'
 
-requires-python = '>=3.11'      # XXX can we lower this?
-dependencies = []
+requires-python = '>=3.11'      # XXX can we lower this? 3.9 minimum.
+dependencies = [ 'columnize', ]
 
 [project.scripts]
 csm = 'csm.csm:main'
 
 ####################################################################
 
+[tool.mypy]
+cache_dir   = '.build/cache/mypy'
+files       = [ 'src/', 'src/**/*.pt' ]
+mypy_path   = [ 'mypy-stubs/', ]
+#   mypy normally loads non-*.py files as a module named __main__, causing
+#   a collsion if there's more than one of them. The following option changes
+#   mypy to name the module after the filename (including extension), which
+#   allows checking multiple *.pt files in one run.
+scripts_are_modules = true
+#   Type-check the interior of functions without type annotations.
+check_untyped_defs  = true
+
+[[tool.mypy.overrides]]
+module = [ 'columnize.*' ]
+follow_untyped_imports = true   # So small it's not worth proper type hints.
+
 [tool.pytest.ini_options]
-cache_dir = '.build/pytest/cache'
+cache_dir = '.build/cache/pytest'
 addopts   = ['-q', '-p pytest_pt', '--doctest-modules']
 testpaths = ['src']     # used only when pytest started from rootdir

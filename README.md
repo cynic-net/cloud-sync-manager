@@ -24,13 +24,19 @@ configuration file.
 A _path_ refers to an section from the configuration file. Paths are
 normalised so that e.g. `~/dir` from the configuration file can be
 referenced with `/home/$USER/dir` or, if the CWD is $HOME, simply `dir/`.
+All paths in the configuration file must be absolute. (Starting a path with
+`~/` makes it absolute.)
 
 A _group_ refers to all sections/paths from the configuration file that
 have that string in in the `groups` list in the configuration file; the
-operation will be done in turn on each member of the group. Group matching
-is done before path matching, so in the example in the paragraph above, a
-group `dir` will refer to the groups, not to the local `dir/` that matches
-just the `~/dir` path.
+operation will be done in turn on each member of the group, just as it
+would be if the paths were listed explicitly on the command line. Group
+matching is done before path matching, so in the example in the paragraph
+above, a group `dir` will refer to the groups, not to the local `dir/` that
+matches just the `~/dir` path.
+
+For commands that take one or more paths and/or groups, generally
+providing zero is fine; the command will successfully do nothing.
 
 ### Global Options
 
@@ -43,17 +49,17 @@ subcommand.
 
 ### Subcommands
 
-* `csm on PATH|GROUP`: Perform the configured action for the given path or
-  group (mount, sync, start periodic sync, etc.). If the path is already
+* `csm on PATH|GROUP  …`: Perform the configured action for the given
+  paths (mount, sync, start periodic sync, etc.). If the path is already
   performing a configured continuous action, the path will be skipped.
 
-* `csm off PATH|GROUP`: Disable any persistent action for the given path
+* `csm off PATH|GROUP …`: Disable any persistent action for the given paths
   (unmount, no longer perform periodic syncs, etc.). If the path is
   configured for a continuous action that is already disabled, the path
   will be skipped.
 
-* `csm show PATH|GROUP`: Display the name and description of the remote for
-  the path, followed by a listing of the files and directories at the top
+* `csm show PATH|GROUP …`: Display the name and description of the remote for
+  the paths, followed by a listing of the files and directories at the top
   level of that remote.
 
 * `csm list`: List all known paths.
@@ -80,11 +86,11 @@ The config file contains a section for each path, followed by key-value
 pairs for the configuration. E.g.,
 
     ['~/cloud/foo']
-    descripton = 'The foo files.'
-    groups = [ 'all', 'mounts', ]
-    remote = 'my-foo:'              # rclone remote `my-foo:`
+    description = 'The foo files.'  # (optional)
+    groups = [ 'all', 'mounts', ]   # (optional)
+    remote = 'my-foo:/bar/baz'      # rclone remote `my-foo:` w/subpath
     action = 'bisync'               # see actions below
-    period = '5m'                   # optional; see "Periodic Actions" below
+    period = '5m'                   # (optional) see "Periodic Actions" below
 
 ### Remotes
 
@@ -97,25 +103,20 @@ remote.)
 The `action` key may have one of the following values:
 
 * `mount`: Mount the remote on _path,_ or unmount if the `off` command is
-  given.
+  given. (See `rclone mount`.)
 
 * `bisync`: Bidirectional sync of remote with _path,_ downloading and
   uploading new and changed files and removing files that have been removed
   on the other side. (See `rclone bidir` for more information.)
 
-* `copy-rm`: Copy all files from the remote to _path,_ overwriting any
+* `sync-rm`: Copy all files from the remote to _path,_ overwriting any
   locally changed files and removing any files not on the remote.
-  (A form of `rclone sync`.)
+  (See `rclone sync`.)
 
-* `copy-save-rm`: As copy-rm above, but keep a backup (see "Backups" below)
-  of any files that would be removed. (A form of `rclone copy`.)
+* `sync-save`: As sync-rm above, but keep a backup (see "Backups" below) of
+  any files that are changed or would be removed. (See `rclone sync`.)
 
-* `copy-save-all`: As copy-rm above, but keep a backup (see "Backups"
-  below) of any files that are changed or would be removed. (A form of
-  `rclone copy`.)
-
-* `push-rm`, `push-save-rm`, `push-save-all`: As with `copy-*` except from
-  _path_ to the remote.
+* `push-rm`, `push-save`: As with `sync-*` except from _path_ to the remote.
 
 #### Backups
 
