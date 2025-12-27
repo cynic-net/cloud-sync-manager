@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+trap 'ec=$?; echo 1>&2 "INTERNAL ERROR: ec=$ec line=$LINENO cmd=$BASH_COMMAND";
+      exit $ec;' ERR
+
+die()  { ec="$1"; shift; echo 1>&2 "ERROR ($ec):" "$@"; exit $ec; }
+fail() { ec=$?; echo "FAILED exitcode=$ec ($(elapsed)s)"; exit $ec; }
+
+elapsed_start=$(date +%s)
+elapsed() { echo $(( $(date +%s) - $elapsed_start )); }
+
+####################################################################
+
+PROJDIR=$(cd $(dirname "$0") && pwd -P)
+
+while [[ $# -gt 0 ]]; do case "$1" in
+    -C)     shift; rm -rf "$PROJDIR/.build/";;
+    -c)     shift; rm -rf "$PROJDIR/.build/virtualenv";;
+    *)      break;;
+esac; done
+
+. $PROJDIR/pactivate -q
+pytest "$@" || fail

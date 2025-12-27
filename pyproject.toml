@@ -1,0 +1,24 @@
+[project]
+version = '0.0.0.dev1'
+name = 'cloud-sync-manager'
+description = 'Manage mount/copy/sync of cloud file storage via rclone'
+authors = [
+    { name = 'Curt J. Sampson', email = 'cjs@cynic.net' },
+]
+readme = 'README.md'
+urls.homepage = 'https://github.com/cynic-net/cloud-sync-manager'
+urls.source = 'https://github.com/cynic-net/cloud-sync-manager'
+urls.tracker = 'https://github.com/cynic-net/cloud-sync-manager/issues'
+
+requires-python = '>=3.11'      # XXX can we lower this?
+dependencies = []
+
+[project.scripts]
+csm = 'csm.csm:main'
+
+####################################################################
+
+[tool.pytest.ini_options]
+cache_dir = '.build/pytest/cache'
+addopts   = ['-q', '-p pytest_pt', '--doctest-modules']
+testpaths = ['src']     # used only when pytest started from rootdir
