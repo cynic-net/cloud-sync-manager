@@ -79,7 +79,7 @@ users' home directories will not work.
 The config file contains a section for each path, followed by key-value
 pairs for the configuration. E.g.,
 
-    ["~/cloud/foo']
+    ['~/cloud/foo']
     descripton = 'The foo files.'
     groups = [ 'all', 'mounts', ]
     remote = 'my-foo:'              # rclone remote `my-foo:`
