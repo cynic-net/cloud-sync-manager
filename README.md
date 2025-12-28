@@ -107,18 +107,25 @@ The `action` key may have one of the following values:
   locally changed files and removing any files not on the remote.
   (A form of `rclone sync`.)
 
-* `copy-keep`: Copy all files from the remote to _path,_ overwriting any
-  locally changed files and keeping any local files that are not on the
-  remote. (A form of `rclone copy`.)
+* `copy-save-rm`: As copy-rm above, but keep a backup (see "Backups" below)
+  of any files that would be removed. (A form of `rclone copy`.)
 
-* `copy-save`: Copy all files from the remote to _path_ but, before
-  copying, move any local files that would be deleted or overwritten with
-  changed data to the same path and name under `.old/` at the root of
-  _path._ (XXX should this keep multiple copies of changing files, perhaps
-  adding an ISO date extension?)
+* `copy-save-all`: As copy-rm above, but keep a backup (see "Backups"
+  below) of any files that are changed or would be removed. (A form of
+  `rclone copy`.)
 
-* `push-rm`, `push-keep`, `push-save`: As with `copy-*` except from _path_
-  to the remote.
+* `push-rm`, `push-save-rm`, `push-save-all`: As with `copy-*` except from
+  _path_ to the remote.
+
+#### Backups
+
+`copy-*` and `push-*` commands may save copies of files that it changes or
+removes in the local copy. These are stored in a `.old/` directory under
+the root of the path, with a subdirectory named for the timestamp of the
+copy/push. E.g., if `foo/bar` is present on the client but deleted on the
+server, a `copy-save-rm` or `copy-save-all` will first copy `foo/bar` to
+`.old/2025-12-28t13:55:47/foo/bar` before deleting `foo/bar`. This applies
+only to files; directories will not be preserved.
 
 ### Periodic Actions
 
