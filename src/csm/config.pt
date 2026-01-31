@@ -41,15 +41,18 @@ config_toml = '''
     period = '5m'                   # optional; see "Periodic Actions" below
 
     [a]
+    remote = 'r-a:'
 
     [b]
+    remote = 'r-b:'
 '''
+config_toml_remotes = {'my-foo', 'r-a', 'r-b', 'r-z'}
 
 def test_readconfig():
     c = Config()
     assert 0 == len(c)
 
-    c.parse_toml(config_toml)
+    c.parse_toml(config_toml, config_toml_remotes)
     assert 3 == len(c)
 
     assert c[Path('~/cloud/foo').expanduser().resolve()]
@@ -59,24 +62,30 @@ def test_readconfig():
 
     add_toml = '''
         [z]
+        remote = 'r-z:'
         description = 'Additional TOML.'
     '''
-    c.parse_toml(add_toml)
+    c.parse_toml(add_toml, config_toml_remotes)
     assert 4 == len(c)
     assert c['z']['description'] == 'Additional TOML.'
 
 groups_toml = '''
     ['/p1']
+    remote = 'r:'
     ['/p2']
+    remote = 'r:'
     groups = ['g2+']
     ['/p3']
+    remote = 'r:'
     groups = ['g2+', 'g3+']
     ['/p4']
+    remote = 'r:'
     groups = ['g2+', 'g3+', 'g4+']
 '''
+groups_toml_remotes = {'r'}
 
 def test_groups_toml_groups():
-    c = Config(groups_toml)
+    c = Config(groups_toml, groups_toml_remotes)
     def grouplist(name):
         return [ sp.prettypath for sp in c.group(name) ]
     assert                    [] == grouplist('nonexistent')
@@ -94,12 +103,12 @@ def test_groups_toml_groups():
    #(('/p4', 'g3+',         ),  ('/p4', '/p3',                      )),
 ])
 def test_expand_groups_ok(path_groups, paths):
-    c = Config(groups_toml)
+    c = Config(groups_toml, groups_toml_remotes)
     sps = c.expand_groups(path_groups)
     assert list(paths) == [ sp.prettypath for sp in sps ]
 
 def test_expand_groups_errs():
-    c = Config(groups_toml)
+    c = Config(groups_toml, groups_toml_remotes)
     with raises(KeyError) as ex:
         c.expand_groups(['/not/here', 'notagroup', '/not/there'])
     assert ex.match('Cannot match groups/paths:' \

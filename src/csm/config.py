@@ -1,6 +1,7 @@
 from    collections.abc  import Sequence
 from    pathlib  import Path
 from    subprocess  import run
+import  sys
 from    tomllib  import loads
 from    typing  import List, Tuple
 
@@ -70,10 +71,10 @@ class SyncPath(dict):
 class Config():
     ' A dict of `SyncPath`s, indexed by absolute `Path`. '
 
-    def __init__(self, config:str=''):
+    def __init__(self, config:str='', known_remotes:set[str]=set()):
         self._data:dict = {}
         if config != '':
-            self.parse_toml(config)
+            self.parse_toml(config, known_remotes)
 
     ####################################################################
     #   Minimal read-only `dict` interface.
@@ -97,9 +98,14 @@ class Config():
 
     ####################################################################
 
-    def parse_toml(self, toml) -> 'Config':
+    def parse_toml(self, toml, known_remotes:set[str]) -> 'Config':
         for heading, values in loads(toml).items():
             sp = SyncPath(heading, values)
+            if not sp.valid(known_remotes):
+                remote = sp.get('remote', '(none)')
+                print(f'csm: ignoring {sp.prettypath}: '
+                    f"remote '{remote}' not in rclone config", file=sys.stderr)
+                continue
             self._data[sp.path] = sp
         return self
 
@@ -127,15 +133,11 @@ class Config():
             raise KeyError(f'Cannot match groups/paths: {errs}')
         return tuple(res)
 
-def rclone_config() -> dict:
-    ''' Return the rclone configuration as a dict.
-        Runs `rclone config show` and parses the TOML output.
-
-        We could use `rclone listremotes` to get just the remote names,
-        but this is not really any slower or more complex and this gives us
-        us additional information about each remote that we can use later.
+def rclone_remotes() -> set[str]:
+    ''' Return the set of remote names configured in rclone.
+        Runs `rclone listremotes` and parses the output.
     '''
-    result = run(['rclone', 'config', 'show'], capture_output=True, text=True)
+    result = run(['rclone', 'listremotes'], capture_output=True, text=True)
     if result.returncode != 0:
-        return {}
-    return loads(result.stdout)
+        return set()
+    return {r.rstrip(':') for r in result.stdout.strip().split('\n') if r}

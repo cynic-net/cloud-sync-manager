@@ -7,7 +7,7 @@ import  shutil
 import  sys
 
 from    columnize  import columnize
-from    csm.config  import Config, ConfigError, SyncPath
+from    csm.config  import Config, ConfigError, SyncPath, rclone_remotes
 
 ####################################################################
 #   Commands are used in the subparser definitions, and so must
@@ -112,7 +112,7 @@ def readconfig(path):
     cf = Config()
     try:
         with open(Path(path).expanduser(), encoding='utf-8') as f:
-            cf.parse_toml(f.read())
+            cf.parse_toml(f.read(), rclone_remotes())
     except OSError as err:
         die(1, f'cannot read config file {path}: {err.strerror}')
     return cf
