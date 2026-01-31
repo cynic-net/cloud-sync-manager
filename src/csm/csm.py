@@ -121,6 +121,8 @@ def readconfig(path):
 #   Actions
 
 def action_on(args:Namespace, path:SyncPath):
+    #   If we are doing an action on a path, create it.
+    path.path.mkdir(exist_ok=True, parents=True)
     match path.action:
         case 'mount':
             rclone(path, args, 'mount',
