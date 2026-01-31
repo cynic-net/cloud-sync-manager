@@ -1,5 +1,6 @@
 from    collections.abc  import Sequence
 from    pathlib  import Path
+from    subprocess  import run
 from    tomllib  import loads
 from    typing  import List, Tuple
 
@@ -12,6 +13,22 @@ class SyncPath(dict):
     def __init__(self, path:Path|str, options:dict):
         self.path = Path(path).expanduser().resolve()
         self.update(options)
+
+    def valid(self, known_remotes:set[str]) -> bool:
+        ''' Validate the syncpath, ensuring that all the information we can
+            check without making a network connection appears to be ok.
+
+            `known_remotes` is the set of valid remote names, each of which
+            _must_ include a ``:``. This validates that the remote name (the
+            part before ``:``) exists in that set.
+        '''
+        remote = self.get('remote')
+        if not remote:
+            return False
+        remote_name = remote.split(':')[0]
+        if remote_name not in known_remotes:
+            return False
+        return True
 
     @property
     def prettypath(self) -> str:
@@ -65,7 +82,6 @@ class Config():
     def _key(self, key):
         return Path(key).expanduser().resolve()
 
-
     def __contains__(self, key):
         return self._data.__contains__(self._key(key))
 
@@ -110,3 +126,16 @@ class Config():
         if errs:
             raise KeyError(f'Cannot match groups/paths: {errs}')
         return tuple(res)
+
+def rclone_config() -> dict:
+    ''' Return the rclone configuration as a dict.
+        Runs `rclone config show` and parses the TOML output.
+
+        We could use `rclone listremotes` to get just the remote names,
+        but this is not really any slower or more complex and this gives us
+        us additional information about each remote that we can use later.
+    '''
+    result = run(['rclone', 'config', 'show'], capture_output=True, text=True)
+    if result.returncode != 0:
+        return {}
+    return loads(result.stdout)

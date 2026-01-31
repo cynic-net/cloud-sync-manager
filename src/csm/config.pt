@@ -9,11 +9,26 @@ from    pytest  import mark, raises
     'foo/bar',
     '~/stuff',
 ])
-def test_SyncPath(pathstr):
+def test_SyncPath_path_and_an_attr(pathstr):
     sp = SyncPath(pathstr, { 'foo': 'bar'})
     assert sp.path.is_absolute()
     assert str(sp.path).endswith(pathstr.removeprefix('~'))
     assert sp['foo'] == 'bar'
+
+def test_SyncPath_no_remote():
+    ' SyncPath with no `remote` key is invalid. '
+    sp = SyncPath('/foo', {})
+    assert not sp.valid(set())
+
+def test_SyncPath_invalid_remote():
+    ' SyncPath with `remote` key not in known remotes is invalid. '
+    sp = SyncPath('/foo', {'remote': 'myremote:sub/dir'})
+    assert not sp.valid({'other', 'another'})
+
+def test_SyncPath_valid():
+    ' SyncPath with `remote` key matching a known remote is valid. '
+    sp = SyncPath('/foo', {'remote': 'myremote:sub/dir'})
+    assert sp.valid({'myremote', 'other'})
 
 ####################################################################
 #   Config
