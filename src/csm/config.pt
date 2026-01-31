@@ -30,6 +30,38 @@ def test_SyncPath_valid():
     sp = SyncPath('/foo', {'remote': 'myremote:sub/dir'})
     assert sp.valid({'myremote', 'other'})
 
+def test_parse_toml_drops_no_remote(capsys):
+    ' Entries with no remote are dropped with warning. '
+    toml = '''
+        ['/valid']
+        remote = 'r:'
+        ['/no-remote']
+        description = 'missing remote key'
+    '''
+    c = Config(toml, {'r'})
+    assert 1 == len(c)
+    assert '/valid' in c
+    assert '/no-remote' not in c
+    err = capsys.readouterr().err
+    assert 'ignoring /no-remote' in err
+    assert 'no remote specified' in err
+
+def test_parse_toml_drops_unknown_remote(capsys):
+    ' Entries with unknown remote are dropped with warning. '
+    toml = '''
+        ['/valid']
+        remote = 'known:'
+        ['/unknown']
+        remote = 'notknown:path'
+    '''
+    c = Config(toml, {'known'})
+    assert 1 == len(c)
+    assert '/valid' in c
+    assert '/unknown' not in c
+    err = capsys.readouterr().err
+    assert 'ignoring /unknown' in err
+    assert "rclone has no remote 'notknown'" in err
+
 ####################################################################
 #   Config
 

@@ -102,9 +102,14 @@ class Config():
         for heading, values in loads(toml).items():
             sp = SyncPath(heading, values)
             if not sp.valid(known_remotes):
-                remote = sp.get('remote', '(none)')
-                print(f'csm: ignoring {sp.prettypath}: '
-                    f"remote '{remote}' not in rclone config", file=sys.stderr)
+                remote = sp.get('remote')
+                if not remote:
+                    print(f'csm: ignoring {sp.prettypath}: '
+                        f'no remote specified', file=sys.stderr)
+                else:
+                    remote_name = remote.split(':')[0]
+                    print(f'csm: ignoring {sp.prettypath}: '
+                        f"rclone has no remote '{remote_name}'", file=sys.stderr)
                 continue
             self._data[sp.path] = sp
         return self
