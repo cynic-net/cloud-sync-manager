@@ -58,6 +58,9 @@ def cmd_list(conf:Config, args:Namespace):
 def cmd_groups(conf:Config, args:Namespace):
     raise RuntimeError('XXX write me')
 
+#   XXX missing commands:
+#   `reconnect`? (if necessary)
+
 ####################################################################
 #   Main, args, config
 
