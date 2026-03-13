@@ -157,8 +157,10 @@ def action_on(args:Namespace, path:SyncPath):
                 )
 
         case 'bisync':
-            #   XXX untested!
-            raise RuntimeError(f'XXX write action: {path.action}')
+            #   XXX Needs manual run w/--rsync on first run; easiest way to
+            #   do that at the moment is with csm -v and then copy command.
+            #   XXX Should be using `--check-access` and `--check-filename`
+            #   here? https://rclone.org/bisync/#check-access
             rclone(path, args, 'bisync',
                 '--delete-after',                   # default
                 '--track-renames', '--links')
