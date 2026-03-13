@@ -162,10 +162,14 @@ def action_on(args:Namespace, path:SyncPath):
                 )
 
         case 'bisync':
-            #   XXX Needs manual run w/--rsync on first run; easiest way to
-            #   do that at the moment is with csm -v and then copy command.
-            #   XXX Should be using `--check-access` and `--check-filename`
-            #   here? https://rclone.org/bisync/#check-access
+            #   XXX 
+            #   • Needs manual run w/--resync on first run; easiest way to
+            #     do that at the moment is with csm -v and then copy command.
+            #   • But also interrupted runs need a --resync; need to add an
+            #     option for this probably. (But how to tell when it should
+            #     not be used?)
+            #   • Should be using `--check-access` and `--check-filename`
+            #     here? https://rclone.org/bisync/#check-access
             rclone(path, args, 'bisync',
                 '--delete-after',                   # default
                 '--track-renames', '--links')
