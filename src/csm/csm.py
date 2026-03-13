@@ -113,11 +113,16 @@ def parseargs(argv:Sequence[str]=sys.argv[1:]):
 
 def readconfig(path):
     cf = Config()
+
+    #   Open the file only to separate failures reading that from failures
+    #   doing further processing that involves other commands (e.g. `rclone`).
     try:
-        with open(Path(path).expanduser(), encoding='utf-8') as f:
-            cf.parse_toml(f.read(), rclone_remotes())
+        with open(Path(path).expanduser(), encoding='utf-8'): ...
     except OSError as err:
         die(1, f'cannot read config file {path}: {err.strerror}')
+
+    with open(Path(path).expanduser(), encoding='utf-8') as f:
+        cf.parse_toml(f.read(), rclone_remotes())
     return cf
 
 ####################################################################
