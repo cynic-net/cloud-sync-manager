@@ -1,6 +1,7 @@
 from    argparse import  ArgumentParser, Namespace
 from    collections.abc  import Sequence
 from    datetime  import datetime, timezone
+from    importlib.metadata  import version
 from    pathlib  import Path
 from    subprocess  import PIPE, Popen, run
 import  shutil
@@ -85,6 +86,10 @@ def parseargs(argv:Sequence[str]=sys.argv[1:]):
     p.add_argument('-c', '--config', metavar='CONFFILE',
         default='~/.config/rclone/cloud-sync-manager.toml',
         help='configuration file (default: %(default)s)')
+    #   Version comes from the installed distribution's metadata, keeping
+    #   pyproject.toml the single source of truth.
+    p.add_argument('--version', action='version',
+        version=f"%(prog)s {version('cloud-sync-manager')}")
 
     sp = p.add_subparsers(dest='cmd', required=True, help='subcommand')
 
