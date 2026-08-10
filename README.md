@@ -1,31 +1,37 @@
 cloud-sync-manager
 ==================
 
-cloud-sync-manager, run as `csm`, is a wrapper around [rclone] to help
-manage configurations of rclone remotes and local directories. The
+> [!NOTE]
+> A † symbol identifies features that are not yet implemented.
+
+cloud-sync-manager (CSM), run as `csm`, is a wrapper around [rclone] to
+help manage configurations of rclone remotes and local directories. The
 configuration is in two parts:
 
 1. The standard rclone configuration file continues to handle cloud storage
-   connectivity and authentication information. This is usually unique to
-   every host as each host will be using different authentication tokens.
+   connectivity and authentication information. This is usually slightly
+   different on every PC as each PC will be using different authentication
+   tokens.
 
-2. A csm configuration file contains mappings of rclone remotes to local
+2. A CSM configuration file contains mappings of rclone remotes to local
    directories and information on how to process these (mount, sync, copy,
-   etc.) This is usually common to all hosts for a particular user.
+   etc.) This can be common to all PCs used by a particular user.
 
 
 Commands and Options
 --------------------
 
-Command-line completion, when added, will be available for options,
+Command-line completion† (when added) will be available for options,
 subcommands, paths and groups; paths and groups are completed from the
 configuration file.
 
-A _path_ refers to an section from the configuration file. Paths are
-normalised so that e.g. `~/dir` from the configuration file can be
-referenced with `/home/$USER/dir` or, if the CWD is $HOME, simply `dir/`.
-All paths in the configuration file must be absolute. (Starting a path with
-`~/` makes it absolute.)
+A _path_ refers to an section from the configuration file. All paths in the
+configuration file must be absolute; starting a path with `~/` is
+considered absolute as it's normalised to `/home/$USER/dir` or similar.
+Absolute and relative paths given on the command line are also normalised
+assuming a `~/dir` in the configuration file, you may reference it with:
+`/home/$USER/dir`; `/home/../home/$USER/dir`; - `dir/` when CWD=`$HOME`;
+`./` when CWD=`$HOME/dir`; `..` when CWD=`$HOME/dir/foo`; etc.
 
 A _group_ refers to all sections/paths from the configuration file that
 have that string in in the `groups` list in the configuration file; the
@@ -45,22 +51,30 @@ subcommand.
 
 * `-n`/`--dry-run`: Just show what would be done, without actually
   performing the action.
-* `-i`/`--interactive`: Same as rclone's interactive mode.
+
+* `-i`/`--interactive`: Enables rclone's [interactive] mode, requesting
+  manual confirmation before destructive operations..
+
+* `-v`/`--verbose`: Enable verbose output describing what CSM is doing.
+
+* `-p`/`--progress`: Have rclone show progress of transfers (continuous
+  updates of time, files checked and amount transferred). This is useful on
+  interactive terminals only.
 
 ### Subcommands
 
-* `csm on PATH|GROUP  …`: Perform the configured action for the given
-  paths (mount, sync, start periodic sync, etc.). If the path is already
+* `csm on GROUP|PATH  …`: Perform the configured action (mount, sync, start
+  periodic sync, etc.) for the given paths. If the path is already
   performing a configured continuous action, the path will be skipped.
 
-* `csm off PATH|GROUP …`: Disable any persistent action for the given paths
+* `csm off GROUP|PATH …`: Disable any persistent action for the given paths
   (unmount, no longer perform periodic syncs, etc.). If the path is
   configured for a continuous action that is already disabled, the path
   will be skipped.
 
-* `csm show PATH|GROUP …`: Display the name and description of the remote for
-  the paths, followed by a listing of the files and directories at the top
-  level of that remote.
+* `csm show GROUP|PATH …`: Display the name and description of the remote
+  for the paths, followed by a listing of the files and directories at the
+  top level of that remote.
 
 * `csm list`: List all known paths.
 
@@ -79,8 +93,8 @@ Configuration is read from `~/.config/rclone/cloud-sync-manager.toml`; this
 can be overridden with the `-c CONFFILE` opion.
 
 Paths in the configuration file may start with `~/` for which the current
-user's home directory will be substituted. (`~NAME` substitutions for other
-users' home directories will not work.
+user's home directory will be substituted. (`~NAME` substitutions for home
+directories will not work.)
 
 The config file contains a section for each path, followed by key-value
 pairs for the configuration. E.g.,
@@ -103,7 +117,7 @@ remote.)
 The `action` key may have one of the following values:
 
 * `mount`: Mount the remote on _path,_ or unmount if the `off` command is
-  given. (See `rclone mount`.)
+  given. (See [`rclone mount`].)
 
 * `bisync`: Bidirectional sync of remote with _path,_ downloading and
   uploading new and changed files and removing files that have been removed
@@ -144,4 +158,6 @@ Probably not because too much work to parse.)
 
 <!-------------------------------------------------------------------->
 [TOML String]: https://toml.io/en/v1.1.0#string
+[`rclone mount`]: https://rclone.org/commands/rclone_mount/
+[interactive]: https://rclone.org/docs/#interactive
 [rclone]: https://rclone.org/
